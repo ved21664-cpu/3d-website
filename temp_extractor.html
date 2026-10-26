@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html>
+<head><style>body { margin: 0; background: black; }</style></head>
+<body>
+  <video id="v" src="http://localhost:5173/house-exploded.mp4" muted playsinline preload="auto" crossorigin="anonymous"></video>
+  <canvas id="c"></canvas>
+  <script>
+    const v = document.getElementById('v');
+    const c = document.getElementById('c');
+    const ctx = c.getContext('2d');
+    
+    window.initVideo = () => {
+      return new Promise((resolve) => {
+        v.onloadeddata = () => {
+          c.width = v.videoWidth || 1920;
+          c.height = v.videoHeight || 1080;
+          resolve({ duration: v.duration, width: c.width, height: c.height });
+        };
+        v.load();
+      });
+    };
+
+    window.captureFrame = (time) => {
+      return new Promise((resolve) => {
+        const onSeeked = () => {
+          v.removeEventListener('seeked', onSeeked);
+          ctx.drawImage(v, 0, 0, c.width, c.height);
+          // Export as JPEG with 0.85 quality for crisp quality and lightweight size (~100kb per frame)
+          const dataUrl = c.toDataURL('image/jpeg', 0.85);
+          resolve(dataUrl);
+        };
+        v.addEventListener('seeked', onSeeked);
+        v.currentTime = time;
+      });
+    };
+  </script>
+</body>
+</html>
